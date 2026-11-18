@@ -2,82 +2,271 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
-  <title>Porsche Lifestyle Share</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover">
 
-    body {
-      margin: 0;
-      background: #f7f7f7;
-      color: #222;
-      font-family: Arial, "Noto Sans TC", sans-serif;
-    }
+<title>Porsche Lifestyle Share</title>
 
-    .container {
-      max-width: 440px;
-      min-height: 100vh;
-      margin: auto;
-      padding: 32px 24px;
-      background: #fff;
-    }
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
-    .brand {
-      font-size: 12px;
-      letter-spacing: 2px;
-      color: #777;
-    }
+<style>
+  * { box-sizing: border-box; }
 
-    h1 {
-      margin-top: 32px;
-      font-size: 24px;
-      font-weight: 500;
-    }
+  body {
+    margin: 0;
+    background: #f5f5f5;
+    color: #222;
+    font-family: Arial, "Noto Sans TC", sans-serif;
+  }
 
-    .description {
-      margin-top: 14px;
-      font-size: 14px;
-      line-height: 1.8;
-      color: #666;
-    }
+  .container {
+    max-width: 440px;
+    min-height: 100vh;
+    padding: 32px 24px;
+    margin: auto;
+    background: white;
+  }
 
-    .status {
-      margin-top: 36px;
-      padding: 18px;
-      background: #f5f5f5;
-      font-size: 13px;
-      line-height: 1.8;
-    }
+  .brand {
+    color: #777;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 2px;
+  }
 
-    .footer {
-      margin-top: 40px;
-      font-size: 11px;
-      color: #999;
-    }
-  </style>
+  h1 {
+    margin: 32px 0 14px;
+    font-size: 25px;
+    font-weight: 500;
+  }
+
+  .desc {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  .card {
+    margin-top: 28px;
+    padding: 22px;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+
+  .card-desc {
+    color: #777;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  button {
+    width: 100%;
+    margin-top: 22px;
+    padding: 15px;
+    border: 0;
+    border-radius: 5px;
+    background: #222;
+    color: white;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    background: #aaa;
+    cursor: not-allowed;
+  }
+
+  .status {
+    margin-top: 24px;
+    padding: 15px;
+    background: #f5f5f5;
+    border-radius: 5px;
+    color: #555;
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+  }
+
+  .footer {
+    margin-top: 42px;
+    color: #999;
+    font-size: 11px;
+  }
+</style>
 </head>
+
 <body>
-  <main class="container">
-    <div class="brand">PORSCHE LIFESTYLE</div>
+<main class="container">
 
-    <h1>LINE 商品分享</h1>
+  <div class="brand">PORSCHE LIFESTYLE</div>
 
-    <p class="description">
-      Porsche Lifestyle 商品資訊分享服務。
-      可透過 LINE 將商品資料分享給指定好友或群組。
-    </p>
+  <h1>LINE 商品分享</h1>
 
-    <div class="status">
-      系統狀態：分享功能建置中
+  <p class="desc">
+    透過 LINE 分享 Porsche Lifestyle
+    商品資訊給指定好友或群組。
+  </p>
+
+  <div class="card">
+
+    <div class="card-title">
+      Porsche Lifestyle｜分享測試
     </div>
 
-    <div class="footer">
-      Porsche Centre Taipei
+    <div class="card-desc">
+      這是一張測試卡片，
+      用來確認 LINE 好友分享功能。
+      目前不包含真實商品資料。
     </div>
-  </main>
+
+    <button id="shareBtn" disabled>
+      初始化中...
+    </button>
+
+  </div>
+
+  <div id="status" class="status">
+    正在連接 LINE...
+  </div>
+
+  <div class="footer">
+    Porsche Centre Taipei
+  </div>
+
+</main>
+
+<script>
+const LIFF_ID = '2012666649-7iUlBFSr';
+
+const statusBox = document.getElementById('status');
+const shareBtn = document.getElementById('shareBtn');
+
+function setStatus(message) {
+  statusBox.textContent = message;
+}
+
+function getErrorText(error) {
+  return error && (error.message || error.code)
+    ? String(error.message || error.code)
+    : String(error);
+}
+
+async function initializeLIFF() {
+  try {
+    await liff.init({
+      liffId: LIFF_ID,
+      withLoginOnExternalBrowser: true
+    });
+
+    if (!liff.isLoggedIn()) {
+      shareBtn.textContent = '登入 LINE';
+      shareBtn.disabled = false;
+
+      shareBtn.onclick = function () {
+        liff.login();
+      };
+
+      setStatus('請先登入 LINE');
+      return;
+    }
+
+    if (!liff.isApiAvailable('shareTargetPicker')) {
+      shareBtn.textContent = '目前無法使用分享功能';
+      shareBtn.disabled = true;
+      setStatus('目前環境不支援 LINE 好友分享，請從手機 LINE 開啟此頁面。');
+      return;
+    }
+
+    shareBtn.textContent = '分享測試卡片至 LINE';
+    shareBtn.disabled = false;
+    shareBtn.onclick = shareTestCard;
+
+    setStatus('LINE 已連線，可以開始測試分享。');
+
+  } catch (error) {
+    shareBtn.textContent = 'LINE 連線失敗';
+    shareBtn.disabled = true;
+    setStatus('初始化失敗：' + getErrorText(error));
+    console.error(error);
+  }
+}
+
+async function shareTestCard() {
+  shareBtn.disabled = true;
+  shareBtn.textContent = '開啟 LINE 分享...';
+
+  try {
+    const message = {
+      type: 'flex',
+      altText: 'Porsche Lifestyle｜分享功能測試',
+      contents: {
+        type: 'bubble',
+        size: 'mega',
+
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          paddingAll: '20px',
+          spacing: 'md',
+
+          contents: [
+            {
+              type: 'text',
+              text: 'PORSCHE LIFESTYLE',
+              size: 'xs',
+              weight: 'bold',
+              color: '#777777'
+            },
+            {
+              type: 'text',
+              text: 'LINE 商品分享測試',
+              size: 'lg',
+              weight: 'bold',
+              color: '#171717',
+              wrap: true
+            },
+            {
+              type: 'text',
+              text: '手機 LIFF 分享功能測試成功後，將替換為正式的商品 PDF 卡片。',
+              size: 'sm',
+              color: '#666666',
+              wrap: true
+            }
+          ]
+        }
+      }
+    };
+
+    const result = await liff.shareTargetPicker(
+      [message],
+      { isMultiple: false }
+    );
+
+    if (result) {
+      setStatus('LINE 分享已完成，請確認接收者是否收到測試卡片。');
+    } else {
+      setStatus('已取消分享，沒有送出測試卡片。');
+    }
+
+  } catch (error) {
+    console.error(error);
+    setStatus('分享失敗：' + getErrorText(error));
+  } finally {
+    shareBtn.disabled = false;
+    shareBtn.textContent = '分享測試卡片至 LINE';
+  }
+}
+
+initializeLIFF();
+</script>
+
 </body>
 </html>
